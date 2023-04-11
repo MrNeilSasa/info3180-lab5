@@ -9,12 +9,17 @@ from app import app, db
 from flask import render_template, request, jsonify, send_file
 import os
 import jwt
+import logging
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from .models import Movie
 from .forms import MovieForm
 from functools import wraps
+from flask_wtf.csrf import generate_csrf
 
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 ###
 # Routing for your application.
@@ -25,9 +30,9 @@ def index():
     return jsonify(message="This is the beginning of our API")
 
 
+
 @app.route("/api/v1/movies", methods=['POST'])
-#@requires_auth
-def moives():
+def movies():
     form = MovieForm()
 
     if form.validate_on_submit():
@@ -35,14 +40,14 @@ def moives():
         description = form.description.data
         poster = form.poster.data
 
+        filename = secure_filename(poster.filename)
+        poster.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-        movie = Movie(title=title, description=description, poster=poster.filename)
+        movie = Movie(title, description, filename)
         db.session.add(movie)
         db.session.commit()
 
-
-        filename = secure_filename(poster.filename)
-        poster.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        
 
         message = 'Movie Successfully added'
         response = {
@@ -51,13 +56,18 @@ def moives():
             'description': description,
             'poster': filename
         }
-        return jsonify(response), 201
+        return jsonify(response=response)
     else:
         # Return error messages
         errors = form_errors(form)
         response = {'errors': errors}
-        return jsonify(response), 400
-###
+        return jsonify(response=response)
+    
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
+
+    ###
 # The functions below should be applicable to all Flask apps.
 ###
 
