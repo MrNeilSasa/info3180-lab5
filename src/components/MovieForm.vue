@@ -96,6 +96,18 @@ function saveMovie()  {
 
 
 
+<style scoped>
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body {
+  flex: 1;
+}
+</style>
+
 <template>
 <form @submit.prevent="saveMovie" id="movieForm">
     <div class="alert alert-success" v-if="successMessage">{{ successMessage }}</div>
